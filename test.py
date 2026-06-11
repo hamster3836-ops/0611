@@ -5,18 +5,18 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
 # 페이지 기본 설정
-st.set_page_config(page_title="약물 농도 변화 수학적 모델링", layout="wide")
+st.set_page_config(page_title="약물 농도 AI 모델링 시뮬레이터", layout="wide")
 
-st.title("💊 AI 융합 프로젝트: 약물 농도 변화의 수학적 모델링 및 시뮬레이션")
-st.write("고등학교 화학·수학·AI 융합 수업을 위한 데이터 분석 및 예측 웹 앱입니다.")
+st.title("💊 AI 융합 프로젝트: 약물 농도 변화 모델링 및 시뮬레이션 웹 앱")
+st.write("고등학교 수학(지수함수/미적분)·화학(반응속도론)·AI(선형회귀) 융합 수업을 위한 실습 도구입니다.")
 
 # -----------------------------------------------------------------------------
-# [공통 데이터 생성] 수업용 가상 환자 데이터셋 (2차시 실습용)
+# [공통 데이터 생성] 2차시 실습용 가상 환자 데이터셋
 # -----------------------------------------------------------------------------
 np.random.seed(42)
 time_data = np.linspace(0, 12, 60) # 0시간부터 12시간까지 60개 시점
 C_0_true = 25.0
-k_true = 0.3466  # 반감기 2시간 기준 (ln(2)/2)
+k_true = 0.3466  # 타이레놀 기본 반감기 2시간 기준 (ln(2)/2)
 noise = np.random.normal(0, 0.8, len(time_data))
 conc_data = C_0_true * np.exp(-k_true * time_data) + noise
 conc_data = np.maximum(conc_data, 0.1) # 음수 방지
@@ -24,166 +24,156 @@ conc_data = np.maximum(conc_data, 0.1) # 음수 방지
 df_sample = pd.DataFrame({"Time_hours": time_data, "Concentration": conc_data})
 
 # -----------------------------------------------------------------------------
-# 사이드바 설정 (3차시: 변수 제어 및 타이레놀 분석용)
+# 사이드바 설정 (3차시: 변인 통제 및 타이레놀 분석용)
 # -----------------------------------------------------------------------------
-st.sidebar.header("⚙️ 시뮬레이션 매개변수 설정")
-st.sidebar.markdown("### [3차시 주요 활동] 변인 통제 및 조건 변경")
+st.sidebar.header("⚙️ 3차시: 시뮬레이션 변수 제어")
+st.sidebar.markdown("### 🧪 복용 조건 및 환자 특성 변경")
 input_c0 = st.sidebar.slider("최초 투여 직후 농도 ($C_0$, $\mu g/mL$)", 10.0, 50.0, 25.0)
-input_half_life = st.sidebar.slider("환자의 약물 반감기 ($t_{1/2}$, 시간)", 1.0, 6.0, 2.0, help="정상 성인은 약 2시간, 대사 저하 환자는 늘어납니다.")
+input_half_life = st.sidebar.slider("환자의 약물 반감기 ($t_{1/2}$, 시간)", 1.0, 6.0, 2.0, 
+                                    help="정상 성인은 약 2시간이며, 간이나 신장 기능이 저하된 환자는 늘어납니다.")
 
 # 입력받은 반감기로 배설 속도 상수 k 계산 (k = ln(2) / t_1/2)
 calculated_k = np.log(2) / input_half_life
 
 # -----------------------------------------------------------------------------
-# 메인 화면 - 차시별 탭(Tab) 구성
+# 메인 화면 - 2차시 및 3차시 탭(Tab) 구성
 # -----------------------------------------------------------------------------
-tab1, tab2, tab3 = st.tabs([
-    "🏃‍♂️ 1차시: 정맥 주사와 몸속 약물 변화", 
-    "📐 2차시: 지수함수 모델 회귀분석 (AI)", 
+tab1, tab2 = st.tabs([
+    "📐 2차시: 지수함수 모델 회귀분석 (AI 학습)", 
     "🎯 3차시: 타이레놀 효과 및 투약 시간 예측"
 ])
 
 # -----------------------------------------------------------------------------
-# 1차시 탭: 현상 이해 및 문제 설정
-# -----------------------------------------------------------------------------
-with tab1:
-    st.header("1차시: 정맥 주사 후 약물은 몸속에서 어떻게 변화할까?")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("💡 주요 탐구 및 개념 소개")
-        st.markdown("""
-        * **정맥 주사(IV Bolus) vs 경구약 복용**: 경구약은 소화기관을 거쳐 서서히 흡수되지만, 정맥 주사는 투여 즉시 혈중 농도가 최고점($C_0$)을 찍은 후 대사/제거됩니다.
-        * **1차 반응(First-order kinetics)**: 체내에서 약물이 제거되는 속도는 현재 몸속에 남아있는 약물의 농도에 비례합니다.
-        * **반감기($t_{1/2}$)**: 혈중 약물 농도가 정확히 절반으로 줄어드는 데 걸리는 시간입니다.
-        """)
-        
-    with col2:
-        st.subheader("📌 수학적 모델링의 출발 (미분방정식)")
-        st.latex(r"\frac{dC}{dt} = -kC")
-        st.markdown("이 식을 변수분리법으로 적분하면, 우리가 배운 **지수함수 모델**이 유도됩니다:")
-        st.latex(r"C(t) = C_0 \cdot e^{-kt}")
-        st.info("💡 2차시 탭으로 이동하여 실제 수집된 데이터 분포를 확인하고 AI에게 회귀 분석을 시켜봅시다.")
-
-# -----------------------------------------------------------------------------
 # 2차시 탭: 그래프 상의 분포 구현 및 지수함수 회귀분석
 # -----------------------------------------------------------------------------
-with tab2:
+with tab1:
     st.header("2차시: 약물 농도 감소는 어떤 수학적 모델로 설명할 수 있을까?")
-    st.subheader("📊 제시된 시간에 따른 약물 농도 데이터 분포 구현")
+    st.markdown("""
+    **주요 활동**: 제시된 시간에 따른 약물 농도 데이터를 그래프 상의 분포로 시각화하고, 
+    지수 함수 모델을 선형화하여 AI 회귀 분석을 수행합니다.
+    """)
     
-    col1_t2, col2_t2 = st.columns([1, 2])
+    col1, col2 = st.columns([1, 2])
     
-    with col1_t2:
-        st.write("💻 수집된 실제 환자의 약물 농도 데이터셋 (일부)")
-        st.dataframe(df_sample.head(10), height=300)
+    with col1:
+        st.subheader("📋 수집된 약물 농도 데이터 (일부)")
+        st.write("MBL 센서나 스마트 기기로 수집된 가상의 시간별 농도 데이터셋입니다.")
+        st.dataframe(df_sample.head(12), height=350)
         
-    with col2_t2:
-        # 2차시 목표: 그래프 상의 분포 구현
-        fig, ax = plt.subplots(figsize=(6, 3.5))
+    with col2:
+        st.subheader("📊 데이터 분포 시각화")
+        fig, ax = plt.subplots(figsize=(6, 4))
         ax.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.7, label="실제 측정 데이터 (오차 포함)")
         ax.set_xlabel("시간 (Time, hours)")
         ax.set_ylabel("농도 (Concentration, ug/mL)")
-        ax.set_title("시간에 따른 약물 농도 데이터 분포")
         ax.grid(True, linestyle="--", alpha=0.5)
         ax.legend()
         st.pyplot(fig)
 
     st.markdown("---")
-    st.subheader("🤖 지수함수 모델로 AI 회귀분석(Regression) 하기")
-    st.write("지수함수 곡선 상태로는 선형 회귀 알고리즘이 가중치를 찾기 어렵습니다. 따라서 양변에 **자연로그($\ln$)를 취해 선형화(직선 변환)**합니다.")
+    st.subheader("🤖 AI 회귀분석(Linear Regression) 알고리즘 실행")
+    st.write("지수함수 곡선($C = C_0 e^{-kt}$) 상태에서는 선형 회귀가 불가능하므로, 양변에 **자연로그($\ln$)를 취해 직선 방정식으로 변환**하여 학습시킵니다.")
     st.latex(r"\ln C(t) = -kt + \ln C_0")
     
-    if st.button("📈 AI 회귀분석 실행 (로그 변환 후 경사하강법 학습)"):
-        # 수학적 전처리: y 데이터에 로그 취하기
+    if st.button("🚀 AI 모델 학습 시작 (로그 데이터 기반 경사하강법 최적화)"):
+        # 수학적 전처리: y축 데이터 로그 변환
         X = df_sample[["Time_hours"]]
         y_log = np.log(df_sample["Concentration"])
         
-        # 선형 회귀 모델 학습
+        # 머신러닝 선형 회귀 모델 학습
         model = LinearRegression()
         model.fit(X, y_log)
         
-        # AI가 찾아낸 파라미터 역산
+        # AI가 찾아낸 최적의 파라미터 역산
         pred_k = -model.coef_[0]
         pred_c0 = np.exp(model.intercept_)
         pred_half_life = np.log(2) / pred_k
         
+        # 수치 결과 출력
         col_res1, col_res2, col_res3 = st.columns(3)
-        col_res1.metric("🤖 AI가 예측한 초기 농도 ($C_0$)", f"{pred_c0:.2f} \mu g/mL")
-        col_res2.metric("📐 AI가 예측한 배설 상수 ($k$)", f"{pred_k:.4f}")
-        col_res3.metric("⏳ 계산된 데이터의 반감기 ($t_{1/2}$)", f"{pred_half_life:.2f} 시간")
+        with col_res1:
+            st.metric("🤖 AI 추정 초기 농도 ($C_0$)", f"{pred_c0:.2f} ㎍/mL")
+        with col_res2:
+            st.metric("📐 AI 추정 배설 상수 ($k$)", f"{pred_k:.4f}")
+        with col_res3:
+            st.metric("⏳ 계산된 데이터 반감기 ($t_{1/2}$)", f"{pred_half_life:.2f} 시간")
         
-        # 결과 시각화 곡선 그리기
-        fig2, ax2 = plt.subplots(figsize=(8, 3.5))
+        # 결과 시각화 지수 곡선 피팅
+        fig2, ax2 = plt.subplots(figsize=(8, 3.8))
         ax2.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.5, label="측정 데이터")
         
-        # AI가 예측한 함수식 기반 곡선 데이터
+        # AI 예측 수식을 곡선으로 시각화
         time_trend = np.linspace(0, 12, 200)
         fit_conc = pred_c0 * np.exp(-pred_k * time_trend)
-        ax2.plot(time_trend, fit_conc, color="darkblue", linewidth=2.5, label=f"AI 추정 지수 곡선: C(t) = {pred_c0:.1f} * e^(-{pred_k:.2f}t)")
+        ax2.plot(time_trend, fit_conc, color="darkblue", linewidth=2.5, 
+                 label=f"AI 피팅 곡선: C(t) = {pred_c0:.1f} * e^(-{pred_k:.2f}t)")
         
         ax2.set_xlabel("시간 (hours)")
         ax2.set_ylabel("농도 (ug/mL)")
         ax2.grid(True, linestyle="--", alpha=0.5)
         ax2.legend()
         st.pyplot(fig2)
+        st.success("✅ AI가 데이터 오차를 극복하고 최적의 지수함수 모델 수식을 성공적으로 찾아내었습니다!")
 
 # -----------------------------------------------------------------------------
 # 3차시 탭: 약학정보원 데이터 기반 타이레놀 복용 시간 예측 및 한계 설명
 # -----------------------------------------------------------------------------
-with tab3:
+with tab2:
     st.header("3차시: 약물 농도 변화 모델을 활용하여 약물 효과 지속 시간 예측하기")
     st.subheader("📋 약학정보원(health.kr) 타이레놀(아세트아미노펜) 가이드라인 연계")
     
     st.markdown("""
-    * **타이레놀의 치료 농도 범위(Therapeutic Window)**: 약효를 내는 최소 유효 농도(**MEC**)는 보통 **5 $\mu g/mL$**, 부작용(간독성)을 일으키는 최소 독성 농도(**MTC**)는 **25 $\mu g/mL$** 부근으로 알려져 있습니다.
-    * 왼쪽 사이드바에서 **환자의 초기 농도와 반감기를 조절**하며 그래프가 어떻게 변하는지 확인해 보세요!
+    * **치료 농도 범위(Therapeutic Window)**: 약효를 나타내는 최소 유효 농도(**MEC**)는 **5 $\mu g/mL$**, 간독성 등 부작용을 유발하는 최소 독성 농도(**MTC**)는 **25 $\mu g/mL$**입니다.
+    * **변인 통제 실습**: 왼쪽 사이드바의 슬라이더를 조절하여 초기 투여량($C_0$)과 환자의 반감기를 변화시켰을 때 약효 지속 시간이 어떻게 바뀌는지 관찰하세요.
     """)
     
-    # 사이드바 입력값을 기반으로 시뮬레이션 타임라인 생성
+    # 사이드바 입력값을 기반으로 미래 시점(24시간)까지 시뮬레이션 데이터 생성
     t_sim = np.linspace(0, 24, 300)
     c_sim = input_c0 * np.exp(-calculated_k * t_sim)
     
-    # 약효 지속 시간(농도가 5 이상 유지되는 시간) 수학적으로 계산
-    # 5 = C_0 * e^(-kt)  ->  ln(5/C_0) = -kt  ->  t = ln(C_0/5) / k
+    # 약효 지속 시간(농도가 MEC=5 이상 유지되는 시간) 수학적 계산
+    # 5 = C_0 * e^(-kt) -> ln(5/C_0) = -kt -> t = ln(C_0/5) / k
     if input_c0 > 5.0:
         duration_hours = np.log(input_c0 / 5.0) / calculated_k
     else:
         duration_hours = 0.0
         
-    st.info(f"🎯 **수학적 모델 예측 결과**: 현재 설정된 조건에서 타이레놀의 약효 지속 시간은 복용 후 약 **{duration_hours:.2f}시간** 입니다.")
+    st.info(f"🎯 **수학적 모델 시뮬레이션 결과**: 설정된 조건에서 타이레놀의 약효 지속 시간은 복용 후 약 **{duration_hours:.2f}시간** 입니다.")
     
     # 시뮬레이션 그래프 시각화
-    fig3, ax3 = plt.subplots(figsize=(9, 4))
-    ax3.plot(t_sim, c_sim, color="teal", linewidth=3, label="시간별 타이레놀 농도 예측 추이 C(t)")
+    fig3, ax3 = plt.subplots(figsize=(9, 4.2))
+    ax3.plot(t_sim, c_sim, color="teal", linewidth=3, label="시간별 타이레놀 예측 농도 C(t)")
     
-    # 치료 범위 가이드선 표시
+    # 가이드라인 수평선 표시
     ax3.axhline(y=5.0, color="orange", linestyle="--", linewidth=1.5, label="최소 유효 농도 (MEC = 5.0)")
     ax3.axhline(y=25.0, color="red", linestyle=":", linewidth=1.5, label="최소 독성 농도 (MTC = 25.0)")
     
-    # 약효 지속 구간 색칠하기
-    ax3.fill_between(t_sim, 0, c_sim, where=(c_sim >= 5.0), color="orange", alpha=0.1, label="약효 유지 구간")
+    # 약효 유지 구간 하이라이트 배경 처리
+    ax3.fill_between(t_sim, 0, c_sim, where=(c_sim >= 5.0), color="orange", alpha=0.1, label="약효 유효 영역")
     
     ax3.set_xlabel("시간 (hours)")
     ax3.set_ylabel("타이레놀 혈중 농도 (ug/mL)")
-    ax3.set_ylim(0, max(input_c0 + 5, 30))
+    ax3.set_ylim(0, max(input_c0 + 5, 32))
     ax3.grid(True, linestyle=":", alpha=0.6)
     ax3.legend(loc="upper right")
     st.pyplot(fig3)
     
-    # 복용 가이드라인 판단 및 피드백
-    st.subheader("🏥 AI 임상 가이드 및 복용 타이밍 조언")
+    # 복용 타이밍 가이드라인 조언
+    st.subheader("🏥 AI 기반 임상 처방 조언 및 투약 타이밍 설계")
     if input_c0 >= 25.0:
-        st.error(f"🚨 **위험 (간독성 경고)**: 초기 농도 {input_c0} $\mu g/mL$는 약학정보원 기준 최소 독성 농도(25 $\mu g/mL$) 이상입니다. 과다 복용 위험이 있으므로 투여량을 즉시 줄여야 합니다.")
+        st.error(f"🚨 **위험 (간독성 유발 가능성)**: 설정한 초기 농도 {input_c0} $\mu g/mL$는 약학정보원 기준 최소 독성 농도(25 $\mu g/mL$) 이상입니다! 과다 복용 위험이 있으므로 투여 용량을 낮추어야 합니다.")
     elif duration_hours > 0:
-        st.success(f"⏰ **추천 투약 주기**: 약효가 {duration_hours:.1f}시간 동안 유지된 후 소실됩니다. 안전한 치료 효과를 위해 약 **{max(4.0, np.round(duration_hours)):.0f}시간~6시간 간격**으로 추가 복용 타이밍을 설계하는 것이 타당합니다.")
+        suggested_interval = max(4.0, np.round(duration_hours))
+        st.success(f"⏰ **추천 추가 복용 주기**: 약효가 {duration_hours:.1f}시간 동안 유지된 후 유효 농도 아래로 떨어집니다. 안전하고 지속적인 진통 효과를 위해 약 **{suggested_interval:.0f}시간 ~ 6시간 간격**으로 재복용 시간을 설계하는 것이 수학적으로 적절합니다.")
+    else:
+        st.warning("⚠️ 최초 투여 농도가 너무 낮아 최소 유효 농도(5 ㎍/mL)에 도달하지 못해 약효가 나타나지 않습니다.")
         
     # 수학적 모델의 유용성과 한계 토론 세션 가이드
     st.markdown("---")
-    st.subheader("💡 🤔 수학적 모델의 유용성과 한계 (4차시 토론 및 보고서 연계용)")
-    with st.expander("이 시뮬레이션 모델이 가지는 '한계점'은 무엇일까요? (클릭하여 확인)"):
+    st.subheader("💡 🤔 수학적 모델의 유용성과 한계 설명하기 (3차시 정리용)")
+    with st.expander("생기부 기록 및 보고서 작성을 위한 질문: 이 시뮬레이션 모델이 가지는 한계점은 무엇일까요?"):
         st.markdown("""
-        1. **흡수 단계의 생략**: 본 모델은 주사를 맞자마자 온몸에 즉시 퍼진다는 '정맥 주사(1구획 모델)'를 가정한 1계 미분방정식입니다. 하지만 우리가 입으로 먹는 타이레놀 정제는 위와 장에서 흡수되는 시간($T_{\text{max}} \approx 0.5\sim1$시간)이 걸리므로, 실제 초반 농도 상승 곡선은 반영하지 못한다는 수학적 한계가 있습니다.
-        2. **개인차의 단순화**: 실제 환자의 대사 속도는 체중, 나이, 유전적 효소 활성도, 음식물 섭취 여부에 따라 시시각각 변하지만, 본 모델은 배설 상수 $k$를 고정된 상수로 취급하였습니다.
-        3. **복합 대사 경로 무시**: 아세트아미노펜이 간에서 독성 물질(NAPQI)로 변환되어 글루타티온과 결합하는 화학적 포화 반응 메커니즘이 누락되어 있습니다.
+        1. **경구 흡수 과정의 생략**: 본 모델은 투여 즉시 혈액에 100% 퍼지는 '정맥 주사' 모델을 기반으로 삼고 있습니다. 실제 입으로 먹는 타이레놀 알약은 위와 장에서 흡수되어 혈중 농도가 최고점에 도달할 때까지 **약 30분 ~ 1시간($T_{\text{max}}$)의 상승 구간**이 존재하지만, 이 모델은 이를 반영하지 못하는 수학적 한계가 있습니다.
+        2. **개인별 대사의 정형화**: 사람의 약물 대사 속도는 나이, 체중, 성별, 간 대사 효소(CYP2E1)의 활성도에 따라 달라지지만 본 시뮬레이션은 $k$를 고정된 상수로 단순화했습니다.
+        3. **약물 축적 효과의 미반영**: 약을 여러 번 반복해서 먹었을 때 체내에 남아있는 잔여량과 새로 복용하는 양이 결합하여 누적되는 정밀한 수학적 모델(등비수열의 합)이 추가로 고려되어야 더 정확한 복용 알고리즘을 짤 수 있습니다.
         """)
