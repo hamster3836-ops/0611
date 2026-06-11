@@ -43,71 +43,70 @@ tab1, tab2 = st.tabs([
 ])
 
 # -----------------------------------------------------------------------------
-# 2차시 탭: 그래프 상의 분포 구현 및 지수함수 회귀분석 (수동 피팅 및 탐구형 수정)
+# 2차시 탭: 데이터 분포 시각화 및 탐구
 # -----------------------------------------------------------------------------
 with tab1:
     st.header("2차시: 약물 농도 감소는 어떤 수학적 모델로 설명할 수 있을까?")
     st.markdown("""
-    **주요 활동**: 제시된 시간에 따른 약물 농도 데이터를 산점도로 시각화하여 경향성을 관찰합니다. 
-    이후 점들의 분포를 가장 잘 대변하는 곡선을 직접 그려보고, 이 곡선이 어떤 수학적 함수 식을 가질지 탐구해 봅시다.
+    **주요 활동**: 제시된 시간에 따른 약물 농도 데이터를 관찰하고, 점들의 분포를 
+    가장 잘 대변하는 곡선을 직접 그려보며 수학적 함수 식을 탐구해 봅시다.
     """)
     
-    # [단계 1] 데이터 표 격리
-    with st.expander("📋 [단계 1] 수집된 약물 농도 데이터 전체 보기 (숫자 데이터 확인)"):
+    # [단계 1] 데이터 표 격리 (클릭 시 열림)
+    with st.expander("📋 [단계 1] 수집된 약물 농도 데이터 전체 보기 (클릭하여 열기)"):
         st.write("MBL 센서나 스마트 기기로 수집된 가상의 시간별 농도 데이터셋(총 60행)입니다.")
         st.dataframe(df_sample, use_container_width=True)
         
     st.markdown("---")
     
-    # [단계 2 & 3 통합 시각화 공간]
-    st.subheader("📊 [단계 2] 데이터 분포 시각화 및 곡선 그려보기")
-    st.write("시간이 흐름에 따라 혈중 약물 농도가 어떻게 감소하는지 빨간색 점(산점도)을 관찰하고, 아래 슬라이더를 움직여 점들의 흐름을 관통하는 나만의 곡선을 완성해 보세요.")
+    # [단계 2] 시각화 및 탐구 곡선 그리기 (클릭 시 열리도록 수정)
+    with st.expander("📊 [단계 2] 데이터 분포 시각화 및 곡선 그려보기 (클릭하여 열기)", expanded=True):
+        st.write("아래 슬라이더를 움직여 붉은색 점(데이터)들의 흐름을 관통하는 나만의 곡선을 완성해 보세요.")
 
-    # 학생들이 직접 그래프를 그리기 위한 수동 매개변수 슬라이더 (AI 자동 연산 제거)
-    col_sl1, col_sl2 = st.columns(2)
-    with col_sl1:
-        manual_a = col_sl1.slider("곡선의 시작 높이 조절 (파라미터 $a$)", 10.0, 40.0, 15.0, step=0.5)
-    with col_sl2:
-        manual_b = col_sl2.slider("곡선의 감소 속도 조절 (파라미터 $b$)", 0.01, 1.00, 0.10, step=0.01)
+        # 학생들이 직접 그래프를 그리기 위한 파라미터 조절 슬라이더
+        col_sl1, col_sl2 = st.columns(2)
+        with col_sl1:
+            manual_a = col_sl1.slider("곡선의 시작 높이 조절 (파라미터 a)", 10.0, 40.0, 15.0, step=0.5)
+        with col_sl2:
+            manual_b = col_sl2.slider("곡선의 감소 속도 조절 (파라미터 b)", 0.01, 1.00, 0.10, step=0.01)
 
-    # 그래프 시각화 (산점도 위에 학생들이 실시간으로 조절하는 곡선이 중첩됨)
-    fig, ax = plt.subplots(figsize=(8, 4.2))
-    # 1. 원본 산점도 분포
-    ax.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.7, label="실제 측정 데이터 (오차 포함)")
-    
-    # 2. 학생들이 슬라이더로 조작하는 동적 탐구 곡선
-    time_trend = np.linspace(0, 12, 200)
-    user_curve = manual_a * np.exp(-manual_b * time_trend)
-    ax.plot(time_trend, user_curve, color="darkblue", linewidth=2.5, 
-             label=f"내가 그린 경향성 곡선: $y = {manual_a:.1f} \\cdot e^{{-{manual_b:.2f}x}}$")
-    
-    ax.set_xlabel("시간 (Time, hours)")
-    ax.set_ylabel("농도 (Concentration, ug/mL)")
-    ax.grid(True, linestyle="--", alpha=0.5)
-    ax.legend(loc="upper right")
-    st.pyplot(fig)
+        # 그래프 시각화
+        fig, ax = plt.subplots(figsize=(8, 4.2))
+        ax.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.7, label="실제 측정 데이터 (오차 포함)")
+        
+        # 곡선 식 감추기 (라벨에서 수식 제거)
+        time_trend = np.linspace(0, 12, 200)
+        user_curve = manual_a * np.exp(-manual_b * time_trend)
+        ax.plot(time_trend, user_curve, color="darkblue", linewidth=2.5, 
+                 label="내가 찾은 경향성 곡선") # <- 수식(y=...)을 제거했습니다.
+        
+        ax.set_xlabel("시간 (Time, hours)")
+        ax.set_ylabel("농도 (Concentration, ug/mL)")
+        ax.grid(True, linestyle="--", alpha=0.5)
+        ax.legend(loc="upper right")
+        st.pyplot(fig)
 
     st.markdown("---")
     
-    # [단계 4] 수식 탐구 세션
+    # [단계 3] 수식 탐구 세션
     st.subheader("🧐 [단계 3] 함수 식 탐구 및 토론 과제")
-    st.write("점들과 가장 잘 겹치도록 곡선을 그리셨나요? 그렇다면 우리가 완성한 이 곡선 식의 수학적 본질을 탐구해 봅시다.")
+    st.write("데이터의 흐름과 가장 잘 겹치도록 곡선을 그리셨나요? 그렇다면 이 곡선이 어떤 수학적 함수인지 유추해 봅시다.")
     
-    col_q1, col_q2 = st.columns(2)
-    with col_q1:
-        st.info("""
-        **Q1. 이 곡선은 우리가 배운 어떤 함수 모델에 해당할까요?**
-        * 1차 함수 ($y = ax + b$)
-        * 2차 함수 ($y = ax^2 + bx + c$)
-        * 지수 함수 ($y = a \\cdot b^{-x}$ 또는 $y = a \\cdot e^{-bx}$)
-        * 로그 함수 ($y = a \\cdot \\ln(x) + b$)
-        """)
-    with col_q2:
+    st.info("""
+    **Q. 우리가 방금 파라미터를 조절하여 그린 이 곡선은 고등학교에서 배운 어떤 함수 모델에 해당할까요?**
+    * 1차 함수 ($y = ax + b$)
+    * 2차 함수 ($y = ax^2 + bx + c$)
+    * 지수 함수 ($y = a \\cdot b^{-x}$ 또는 $y = a \\cdot e^{-bx}$)
+    * 로그 함수 ($y = a \\cdot \\ln(x) + b$)
+    """)
+    
+    # 정답을 바로 보여주지 않고 클릭해야만 나타나도록 수정
+    with st.expander("💡 힌트 및 정답 확인하기"):
         st.success("""
-        **🧠 정답 및 수학적 원리 힌트**
-        * 이 곡선은 대표적인 **지수 함수(Exponential Decay) 모델**입니다.
-        * 화학 반응 속도론과 약동학에서 약물이 제거되는 속도가 현재 농도에 비례한다는 미분방정식($\\frac{dC}{dt} = -kC$)을 풀면, 이와 같은 지수함수 감소 수식이 도출됩니다.
-        * 점들과 가장 완벽하게 일치할 때의 수식은 대략 $y = 25.0 \\cdot e^{-0.35x}$ 형태가 됩니다.
+        **🧠 정답: 지수 함수 (Exponential Model)**
+        * 우리가 그린 곡선은 대표적인 **지수 함수 감소(Exponential Decay)** 모델입니다.
+        * 약동학에서 약물이 체내에서 제거되는 속도는 '현재 남아있는 농도'에 비례합니다. 이를 미분방정식($\\frac{dC}{dt} = -kC$)으로 세우고 풀면, 이와 같은 형태의 지수함수 수식($C(t) = C_0 \\cdot e^{-kt}$)이 도출됩니다.
+        * 점들과 가장 완벽하게 일치할 때 파라미터는 대략 **a = 25.0, b = 0.35** 부근이 됩니다.
         """)
 
 # -----------------------------------------------------------------------------
