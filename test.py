@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 st.set_page_config(page_title="약물 농도 AI 모델링 시뮬레이터", layout="wide")
 
 st.title("💊 AI 융합 프로젝트: 약물 농도 변화 모델링 및 시뮬레이션 웹 앱")
-st.write("고등학교 수학(지수함수/미적분)·화학(반응속도론)·AI(선형회귀) 융합 수업을 위한 실습 도구입니다.")
+st.write("고등학교 수학(지수함수)·화학(반응속도론)·AI(선형회귀) 융합 수업을 위한 실습 도구입니다.")
 
 # -----------------------------------------------------------------------------
 # [공통 데이터 생성] 2차시 실습용 가상 환자 데이터셋
@@ -44,52 +44,78 @@ tab1, tab2 = st.tabs([
 ])
 
 # -----------------------------------------------------------------------------
-# 2차시 탭: 그래프 상의 분포 구현 및 지수함수 회귀분석
+# 2차시 탭: 그래프 상의 분포 구현 및 지수함수 회귀분석 (수정된 구역)
 # -----------------------------------------------------------------------------
 with tab1:
     st.header("2차시: 약물 농도 감소는 어떤 수학적 모델로 설명할 수 있을까?")
     st.markdown("""
-    **주요 활동**: 제시된 시간에 따른 약물 농도 데이터를 그래프 상의 분포로 시각화하고, 
-    지수 함수 모델을 선형화하여 AI 회귀 분석을 수행합니다.
+    **주요 활동**: 제시된 시간에 따른 약물 농도 데이터를 산점도로 시각화하여 경향성을 관찰한 후, 
+    AI 알고리즘을 통해 이 분포를 가장 잘 설명하는 회귀분석 곡선을 도출합니다.
     """)
     
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.subheader("📋 수집된 약물 농도 데이터 (일부)")
-        st.write("MBL 센서나 스마트 기기로 수집된 가상의 시간별 농도 데이터셋입니다.")
-        st.dataframe(df_sample.head(12), height=350)
+    # [변경 포인트 1] 데이터 표를 그래프와 동시에 노출하지 않고 접이식으로 격리
+    with st.expander("📋 [단계 1] 수집된 약물 농도 데이터 전체 보기 (숫자 데이터 확인)"):
+        st.write("MBL 센서나 스마트 기기로 수집된 가상의 시간별 농도 데이터셋(총 60행)입니다.")
+        st.dataframe(df_sample, use_container_width=True)
         
-    with col2:
-        st.subheader("📊 데이터 분포 시각화")
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.7, label="실제 측정 데이터 (오차 포함)")
-        ax.set_xlabel("시간 (Time, hours)")
-        ax.set_ylabel("농도 (Concentration, ug/mL)")
-        ax.grid(True, linestyle="--", alpha=0.5)
-        ax.legend()
+    st.markdown("---")
+    st.subheader("📊 [단계 2] 데이터 분포 시각화 (산점도 관찰)")
+    st.write("시간이 흐름에 따라 혈중 약물 농도가 어떻게 감소하는지 데이터의 '분포'를 먼저 파악해 봅시다.")
+    
+    # [변경 포인트 2] 그래프가 그려질 동적 컨테이너 공간(Placeholder) 확보
+    plot_placeholder = st.empty()
+    
+    # 초기 상태: 순수한 산점도만 생성하여 화면에 배치
+    fig, ax = plt.subplots(figsize=(8, 4.2))
+    ax.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.7, label="실제 측정 데이터 (오차 포함)")
+    ax.set_xlabel("시간 (Time, hours)")
+    ax.set_ylabel("농도 (Concentration, ug/mL)")
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.legend()
+    
+    with plot_placeholder.container():
         st.pyplot(fig)
 
     st.markdown("---")
-    st.subheader("🤖 AI 회귀분석(Linear Regression) 알고리즘 실행")
-    st.write("지수함수 곡선($C = C_0 e^{-kt}$) 상태에서는 선형 회귀가 불가능하므로, 양변에 **자연로그($\ln$)를 취해 직선 방정식으로 변환**하여 학습시킵니다.")
+    st.subheader("🤖 [단계 3] AI 회귀분석(Linear Regression) 수식 도출")
+    st.write("이 곡선형 분포를 AI에게 학습시키기 위해, 양변에 **자연로그($\\ln$)를 취해 직선 방정식으로 변환**하는 수학적 전처리를 수행합니다.")
     st.latex(r"\ln C(t) = -kt + \ln C_0")
     
-    if st.button("🚀 AI 모델 학습 시작 (로그 데이터 기반 경사하강법 최적화)"):
-        # 수학적 전처리: y축 데이터 로그 변환
+    # 버튼을 누르면 아래 코드가 실행되며 기존 산점도 자리에 회귀 곡선이 추가된 그래프가 업데이트됩니다.
+    if st.button("🚀 AI 모델 학습 시작 (회귀분석 곡선 만들기)"):
+        # 1. 수학적 전처리 및 머신러닝 모델 학습
         X = df_sample[["Time_hours"]]
         y_log = np.log(df_sample["Concentration"])
         
-        # 머신러닝 선형 회귀 모델 학습
         model = LinearRegression()
         model.fit(X, y_log)
         
-        # AI가 찾아낸 최적의 파라미터 역산
+        # 2. AI가 찾아낸 최적의 파라미터 역산
         pred_k = -model.coef_[0]
         pred_c0 = np.exp(model.intercept_)
         pred_half_life = np.log(2) / pred_k
         
-        # 수치 결과 출력
+        # 3. [핵심] 기존 산점도만 있던 placeholder 자리에 '산점도 + 회귀 곡선' 그래프를 덮어쓰기
+        with plot_placeholder.container():
+            fig2, ax2 = plt.subplots(figsize=(8, 4.2))
+            # 기존 산점도 다시 그리기
+            ax2.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.5, label="측정 데이터")
+            
+            # AI가 찾아낸 수식을 부드러운 선(Curve)으로 그려 얹기
+            time_trend = np.linspace(0, 12, 200)
+            fit_conc = pred_c0 * np.exp(-pred_k * time_trend)
+            ax2.plot(time_trend, fit_conc, color="darkblue", linewidth=2.5, 
+                     label=f"AI 추정 회귀 곡선: C(t) = {pred_c0:.1f} * e^(-{pred_k:.2f}t)")
+            
+            ax2.set_xlabel("시간 (hours)")
+            ax2.set_ylabel("농도 (ug/mL)")
+            ax2.grid(True, linestyle="--", alpha=0.5)
+            ax2.legend()
+            st.pyplot(fig2)
+            
+        # 4. 학습 완료 후 하단에 수치 결과 및 성공 메시지 출력
+        st.success("✅ AI가 데이터 오차를 극복하고 최적의 지수함수 모델 수식을 성공적으로 도출해 덮어씌웠습니다!")
+        
         col_res1, col_res2, col_res3 = st.columns(3)
         with col_res1:
             st.metric("🤖 AI 추정 초기 농도 ($C_0$)", f"{pred_c0:.2f} ㎍/mL")
@@ -97,23 +123,6 @@ with tab1:
             st.metric("📐 AI 추정 배설 상수 ($k$)", f"{pred_k:.4f}")
         with col_res3:
             st.metric("⏳ 계산된 데이터 반감기 ($t_{1/2}$)", f"{pred_half_life:.2f} 시간")
-        
-        # 결과 시각화 지수 곡선 피팅
-        fig2, ax2 = plt.subplots(figsize=(8, 3.8))
-        ax2.scatter(df_sample["Time_hours"], df_sample["Concentration"], color="crimson", alpha=0.5, label="측정 데이터")
-        
-        # AI 예측 수식을 곡선으로 시각화
-        time_trend = np.linspace(0, 12, 200)
-        fit_conc = pred_c0 * np.exp(-pred_k * time_trend)
-        ax2.plot(time_trend, fit_conc, color="darkblue", linewidth=2.5, 
-                 label=f"AI 피팅 곡선: C(t) = {pred_c0:.1f} * e^(-{pred_k:.2f}t)")
-        
-        ax2.set_xlabel("시간 (hours)")
-        ax2.set_ylabel("농도 (ug/mL)")
-        ax2.grid(True, linestyle="--", alpha=0.5)
-        ax2.legend()
-        st.pyplot(fig2)
-        st.success("✅ AI가 데이터 오차를 극복하고 최적의 지수함수 모델 수식을 성공적으로 찾아내었습니다!")
 
 # -----------------------------------------------------------------------------
 # 3차시 탭: 약학정보원 데이터 기반 타이레놀 복용 시간 예측 및 한계 설명
@@ -131,8 +140,7 @@ with tab2:
     t_sim = np.linspace(0, 24, 300)
     c_sim = input_c0 * np.exp(-calculated_k * t_sim)
     
-    # 약효 지속 시간(농도가 MEC=5 이상 유지되는 시간) 수학적 계산
-    # 5 = C_0 * e^(-kt) -> ln(5/C_0) = -kt -> t = ln(C_0/5) / k
+    # 약효 지속 시간 수학적 계산
     if input_c0 > 5.0:
         duration_hours = np.log(input_c0 / 5.0) / calculated_k
     else:
@@ -143,14 +151,9 @@ with tab2:
     # 시뮬레이션 그래프 시각화
     fig3, ax3 = plt.subplots(figsize=(9, 4.2))
     ax3.plot(t_sim, c_sim, color="teal", linewidth=3, label="시간별 타이레놀 예측 농도 C(t)")
-    
-    # 가이드라인 수평선 표시
     ax3.axhline(y=5.0, color="orange", linestyle="--", linewidth=1.5, label="최소 유효 농도 (MEC = 5.0)")
     ax3.axhline(y=25.0, color="red", linestyle=":", linewidth=1.5, label="최소 독성 농도 (MTC = 25.0)")
-    
-    # 약효 유지 구간 하이라이트 배경 처리
     ax3.fill_between(t_sim, 0, c_sim, where=(c_sim >= 5.0), color="orange", alpha=0.1, label="약효 유효 영역")
-    
     ax3.set_xlabel("시간 (hours)")
     ax3.set_ylabel("타이레놀 혈중 농도 (ug/mL)")
     ax3.set_ylim(0, max(input_c0 + 5, 32))
