@@ -37,12 +37,11 @@ def load_data():
     return t, c
 
 time_data, conc_data = load_data()
-df_sample = pd.DataFrame({"Time(h)": np.round(time_data, 1), "Conc(mg/L)": np.round(conc_data, 2)})
 
 # -----------------------------------------------------------------------------
 # 탭 구성
 # -----------------------------------------------------------------------------
-tab1, tab2 = st.tabs(["🕵️‍♂️ 1~2단계: 수학적 모델 동적 탐구", "⏱️ 3단계: 공식 도출 및 복용 간격 예측"])
+tab1, tab2 = st.tabs(["🕵️‍♂️ 1~2단계: 수학적 모델 동적 탐구", "⏱️ 3단계: 모델 완성 및 복용 간격 예측"])
 
 # =============================================================================
 # TAB 1: 1단계 & 2단계 (동적 파라미터 조절)
@@ -122,20 +121,17 @@ with tab1:
         
         st.plotly_chart(fig, use_container_width=True)
 
-    # 💡 [핵심 변경] 결론을 알려주지 않고 학생 스스로 탐구하도록 유도하는 박스
     st.markdown('<div class="explore-box">', unsafe_allow_html=True)
     st.markdown("### 🤔 [심화 탐구] 어떤 수학적 모델이 가장 적합할까요?")
     st.markdown("""
     세 가지 함수의 파라미터를 모두 조작해 보았나요? 단순히 눈으로 보기에 곡선이 비슷하다고 해서 올바른 과학적 모델인 것은 아닙니다. 조원들과 함께 아래의 두 가지 관점에서 데이터를 분석하고 진짜 정답을 찾아보세요!
 
     **1. 통계적 관점: '잔차(Residual)'에 숨겨진 단서**
-    * 1차 함수(직선)나 2차 함수 모델의 파라미터를 아무리 잘 조절해도, $R^2$ 점수는 올라갈지언정 **아래쪽 잔차 그래프에 U자나 V자 모양의 일정한 '패턴'**이 남게 됩니다. 
-    * 💡 **탐구 질문:** 완벽하게 데이터를 설명하는 모델이라면, 모델이 잡아내지 못한 오차(잔차)는 특정한 규칙을 가져야 할까요, 아니면 0을 중심으로 무작위(Random)로 흩어져야 할까요? 세 가지 함수 중 잔차가 가장 무작위로 흩어지는 모델은 무엇인가요?
+    * 1차 함수나 2차 함수 모델은 점수를 아무리 올려도 아래쪽 잔차 그래프에 U자나 V자 모양의 일정한 '패턴'이 남게 됩니다. 잔차가 가장 무작위(Random)로 흩어지는 모델은 무엇인가요?
 
     **2. 과학 및 수학적 관점: 약물이 분해되는 속도 (변화율)**
-    * 1차 함수(직선) 모델은 "시간이 지나도 약물이 줄어드는 *절대적인 양*이 매시간 똑같다"는 것을 의미합니다. (예: 체내 약물이 100이든 10이든 무조건 매시간 2mg씩 감소)
-    * 하지만 실제 우리 몸의 간은 **'현재 몸에 남아있는 약물의 양(농도)'에 비례**하여 약물을 분해합니다. 몸에 약이 많으면 빨리 분해하고, 적으면 천천히 분해하죠.
-    * 💡 **탐구 질문:** '약물 농도의 변화율(속도)이 현재 농도 $C$에 비례한다'는 문장을 기호로 쓰면 $\\frac{dC}{dt} = -kC$ 가 됩니다. 고등학교 수학 지식을 동원했을 때, 이 조건을 만족하는 함수는 1차, 2차, 지수 함수 중 무엇일 수밖에 없을까요?
+    * 실제 우리 몸의 간은 **'현재 몸에 남아있는 약물의 양(농도)'에 비례**하여 약물을 분해합니다.
+    * 💡 **탐구 질문:** '약물 농도의 변화율(속도)이 현재 농도 $C$에 비례한다'는 조건을 수식으로 표현하면 $\\frac{dC}{dt} = -kC$ 가 됩니다. 이 미분방정식을 만족하는 함수는 1차, 2차, 지수 함수 중 무엇일까요?
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -145,88 +141,86 @@ with tab1:
 with tab2:
     st.markdown('<div class="step-title">3단계: 수식 도출 및 맞춤형 복용 주기 예측</div>', unsafe_allow_html=True)
     
-    # 이상적 파라미터
-    opt_c0 = 25.0
-    opt_k = 0.35
-    true_half_life = np.log(2) / opt_k # 약 1.98시간
+    st.write("1~2단계 탐구를 통해 가장 적합한 모델이 **지수함수 모델**임을 알아냈습니다. 이제 여러분이 찾은 파라미터를 이용해 모델을 완성하고 시뮬레이션을 진행해 봅시다.")
     
-    st.markdown("""
-    앞선 탐구를 통해 우리는 가장 적합한 모델이 **지수함수 모델**임을 알아냈습니다. 
-    이제 분석을 통해 도출된 환자의 파라미터를 기반으로 맞춤형 복용 주기를 설계해 봅시다.
-    """)
+    # 💡 [미션 1] 수학적 모델 직접 완성하기
+    st.markdown("### 🧩 [미션 1] 나만의 지수함수 모델 완성하기")
+    st.markdown('<div class="mission-box">', unsafe_allow_html=True)
+    st.write("1~2단계에서 오차가 가장 적고 잔차가 무작위로 퍼졌던 '초기 농도($C_0$)'와 '소실 속도 상수($k$)' 값을 아래에 입력해 보세요.")
     
-    st.markdown("---")
+    col_input1, col_input2 = st.columns(2)
+    with col_input1:
+        student_c0 = st.number_input("초기 농도 ($C_0$) 입력:", min_value=0.0, max_value=50.0, step=0.5, value=0.0)
+    with col_input2:
+        student_k = st.number_input("소실 속도 상수 ($k$) 입력:", min_value=0.00, max_value=1.00, step=0.01, value=0.00)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # 1. 반감기 스스로 계산하기
-    st.markdown("### ✍️ [미션 1] 약물 반감기($t_{1/2}$) 직접 계산하기")
-    col_m1, col_m1_hint = st.columns([1, 1])
-    
-    with col_m1:
-        st.markdown('<div class="mission-box">', unsafe_allow_html=True)
-        st.write(f"현재 환자의 초기 농도는 **$C_0 = {opt_c0}$**, 소실 속도 상수는 **$k = {opt_k}$** 입니다.")
-        st.write("반감기는 약물 농도가 처음의 정확히 절반($C_0 / 2$)으로 줄어드는 시간입니다. 환자의 반감기를 계산해 보세요.")
-        student_half_life = st.number_input("계산한 반감기를 입력하세요 (소수 첫째 자리 권장):", min_value=0.0, max_value=10.0, step=0.1)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with col_m1_hint:
-        st.info("""
-        **💡 반감기 계산 힌트**
-        1. 지수함수 식에 반감기 조건을 대입합니다: $\\frac{1}{2} C_0 = C_0 \cdot e^{-0.35t}$
-        2. 양변을 $C_0$로 나눕니다: $\\frac{1}{2} = e^{-0.35t}$
-        3. 양변에 자연로그($\\ln$)를 취하여 $t$값을 구해보세요. (단, $\\ln 2 \approx 0.693$)
-        """)
-
-    # 미션 1 통과 여부 확인
-    is_m1_correct = False
-    if student_half_life > 0:
-        if abs(student_half_life - true_half_life) < 0.15: # 1.9 ~ 2.1 사이 정답 인정
-            st.success(f"🎉 훌륭합니다! 환자의 반감기는 약 **{student_half_life:.1f}시간** 입니다. 다음 미션이 열렸습니다.")
-            is_m1_correct = True
+    is_model_correct = False
+    if student_c0 > 0 and student_k > 0:
+        # 학생이 찾은 파라미터가 이상적인 값(25.0, 0.35) 근처인지 확인
+        if abs(student_c0 - 25.0) <= 1.5 and abs(student_k - 0.35) <= 0.05:
+            st.success("🎉 정확합니다! 이상적인 파라미터를 아주 잘 찾았군요. 아래의 환자 맞춤형 모델이 완성되었습니다.")
+            st.latex(rf"C(t) = {student_c0:.1f} \cdot e^{{-{student_k:.2f}t}}")
+            is_model_correct = True
         else:
-            st.error("아쉽네요! 다시 한 번 계산해 보세요. (힌트: 0.693 ÷ 0.35)")
+            st.error("앗, 값이 조금 다릅니다. 1~2단계에서 R² 점수가 가장 높았던 지수함수의 슬라이더 값을 다시 확인해 보세요. (힌트: $C_0$는 25 부근, $k$는 0.35 부근입니다.)")
 
-    # 2. 역함수 스스로 도출하기 (미션 1 성공 시 오픈)
-    if is_m1_correct:
+    # 💡 [미션 2] 반감기 스스로 계산하기
+    if is_model_correct:
         st.markdown("---")
-        st.markdown("### 🔄 [미션 2] 목표 농도 도달 시간 구하기 (역함수 찾기)")
-        st.write("안전한 복용 주기를 알려면, 약물이 특정 목표 농도($C$)로 떨어지는 데 걸리는 시간($t$)을 알아야 합니다.")
-        st.write("지수함수 $C = C_0 \cdot e^{-kt}$ 를 **$t$에 관해 정리(역함수)**하면 다음 중 어떤 식이 될까요?")
+        st.markdown("### ✍️ [미션 2] 약물 반감기($t_{1/2}$) 직접 계산하기")
         
-        formula_choice = st.radio("올바른 역함수 수식을 선택하세요:", 
-                                  ["선택하세요", 
-                                   "1. $t = \\frac{C_0 - C}{k}$", 
-                                   "2. $t = \\frac{-\\ln(C / C_0)}{k}$", 
-                                   "3. $t = -k \cdot \\ln(C / C_0)$"])
-        
-        is_m2_correct = False
-        if formula_choice == "2. $t = \\frac{-\\ln(C / C_0)}{k}$":
-            st.success("🎉 완벽합니다! 양변을 $C_0$로 나누고 자연로그($\\ln$)를 취하여 로그함수를 정확히 도출해 냈습니다. 최종 시뮬레이션이 활성화되었습니다.")
-            is_m2_correct = True
-        elif formula_choice != "선택하세요":
-            st.error("오답입니다. 식을 풀 때 밑이 $e$인 지수를 없애기 위해 어떤 로그를 취해야 할지 생각해 보세요.")
+        col_m2, col_m2_hint = st.columns([1.2, 1])
+        with col_m2:
+            st.markdown('<div class="mission-box">', unsafe_allow_html=True)
+            st.write("반감기는 약물 농도가 처음($C_0$)의 정확히 절반($C_0 / 2$)으로 줄어드는 시간입니다. 방금 완성한 수식을 이용해 환자의 반감기를 계산해 보세요.")
+            student_hl = st.number_input("계산한 반감기를 입력하세요 (소수 첫째 자리 권장):", min_value=0.0, max_value=15.0, step=0.1, value=0.0)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        with col_m2_hint:
+            st.info(r"""
+            **💡 반감기 계산 힌트**
+            1. 완성된 식에 반감기 조건을 대입합니다: 
+               $\frac{1}{2} C_0 = C_0 \cdot e^{-kt}$
+            2. 양변을 $C_0$로 나누면: $\frac{1}{2} = e^{-kt}$
+            3. 양변에 자연로그($\ln$)를 취하여 $t$값을 구해보세요. 
+               (단, $\ln 2 \approx 0.693$ 으로 계산합니다.)
+            """)
 
-        # 3. 최소 유효 농도 설정 및 예측 (미션 2 성공 시 오픈)
-        if is_m2_correct:
+        is_hl_correct = False
+        true_hl = np.log(2) / student_k
+        if student_hl > 0:
+            if abs(student_hl - true_hl) <= 0.2: # 오차 허용 범위 설정
+                st.success(f"🎉 훌륭합니다! 환자의 반감기는 약 **{student_hl:.1f}시간** 입니다. 시뮬레이션 단계가 활성화되었습니다.")
+                is_hl_correct = True
+            else:
+                st.error("다시 한 번 계산해 보세요. (힌트: 0.693을 방금 찾은 소실 속도 상수 k로 나누어 보세요.)")
+
+        # 💡 [탐구 활동] 최소 유효 농도 설정 및 예측
+        if is_hl_correct:
             st.markdown("---")
-            st.markdown("### 🎯 [최종 단계] 최소 유효 농도 설정 및 복용 시점 예측")
-            st.write("우리가 직접 도출한 역함수 공식을 바탕으로, 환자의 약효가 떨어지기 전 다음 약을 먹어야 할 시점을 예측해 봅시다.")
+            st.markdown("### 🎯 [탐구 활동] 역함수 도출 및 복용 주기 시뮬레이션")
+            st.write("안전한 복용 주기를 알려면, 약물이 목표하는 농도($C$)로 떨어지는 데 걸리는 시간($t$)을 구하는 **역함수**가 필요합니다.")
+            st.latex(r"t = \frac{-\ln(C / C_0)}{k}")
             
-            target_c = st.slider("최소 유효 농도 설정 ($C_{min}$ 단위: mg/L)", 1.0, 10.0, 5.0, 0.5)
+            st.write("약효가 떨어지기 전, 다음 약을 복용해야 하는 기준선인 **최소 유효 농도($C_{min}$)**를 설정해 보세요.")
             
-            # 학생이 직접 고른 역함수 공식을 활용해 컴퓨터가 시간 예측
-            pred_time = -np.log(target_c / opt_c0) / opt_k
+            target_c = st.slider("최소 유효 농도 설정 (단위: mg/L)", 1.0, 10.0, 5.0, 0.5)
             
-            st.markdown(f"### 💡 예측 결과: 다음 약 복용 시점은 투여 후 약 **{pred_time:.1f}시간** 뒤입니다.")
+            # 학생이 입력했던 C0, k를 바탕으로 예측 시간 계산
+            pred_time = -np.log(target_c / student_c0) / student_k
+            
+            st.markdown(f"### ⏱️ 예측 결과: 다음 약 복용 시점은 투여 후 약 **{pred_time:.1f}시간** 뒤입니다.")
             
             # Plotly 시뮬레이션 시각화
             t_pred = np.linspace(0, 24, 200)
-            c_pred = opt_c0 * np.exp(-opt_k * t_pred)
+            c_pred = student_c0 * np.exp(-student_k * t_pred)
             
             fig_pred = go.Figure()
             fig_pred.add_trace(go.Scatter(x=t_pred, y=c_pred, mode='lines', name='농도 예측 모델', line=dict(color='#0f766e', width=3)))
             fig_pred.add_hline(y=target_c, line_dash='dash', line_color='#d97706', annotation_text=f"최소 유효 농도 ({target_c})")
             fig_pred.add_trace(go.Scatter(x=[pred_time], y=[target_c], mode='markers+text', name='복용 시점',
-                                          marker=dict(color='red', size=12), text=[f"약효 소실 지점 (t={pred_time:.1f}h)"], textposition="top right", textfont=dict(color="red", size=13)))
+                                          marker=dict(color='red', size=12), text=[f"다음 복용 시점 (t={pred_time:.1f}h)"], textposition="top right", textfont=dict(color="red", size=13)))
             
             fig_pred.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="white", showlegend=False)
             fig_pred.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="시간 (hours)", range=[0, 15], fixedrange=True)
