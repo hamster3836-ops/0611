@@ -49,17 +49,11 @@ with tab1:
     st.markdown('<div class="step-title">1단계: 측정 데이터 관찰</div>', unsafe_allow_html=True)
     st.write("혈중 약물 농도 측정 데이터가 어떻게 분포되어 있는지 확인합니다.")
     
-    # 💡 1단계 그래프 (1:1 강제 비율 해제, 직관적인 가로형 황금비율 적용)
     fig_data = go.Figure()
     fig_data.add_trace(go.Scatter(x=time_data, y=conc_data, mode='markers', marker=dict(size=8, color='#e11d48'), name='측정값'))
-    
-    # 높이를 400으로 조절하여 데이터의 감소 추세가 잘 보이도록 수정
     fig_data.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="시간 (hours)", yaxis_title="농도 (mg/L)", plot_bgcolor="white")
-    
-    # 축 이동/확대 방지(fixedrange=True)는 유지하되, scaleanchor(1:1 비율)는 제거
     fig_data.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-0.5, 12.5], autorange=False, fixedrange=True)
     fig_data.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-5, 45], autorange=False, fixedrange=True)
-    
     st.plotly_chart(fig_data, use_container_width=True)
 
     st.markdown('<div class="step-title">2단계: 나만의 수학적 모델 만들기 (동적 파라미터 탐구)</div>', unsafe_allow_html=True)
@@ -132,12 +126,20 @@ with tab1:
         
         st.plotly_chart(fig, use_container_width=True)
 
-    with st.expander("✅ [탐구 결론] 세 가지 함수를 모두 조작해 보았나요? 과학적 결론을 확인해 봅시다."):
-        st.success("""
-        **가장 완벽한 수학적 모델은 '지수 함수'입니다.**
-        
-        * **수학/통계적 이유:** 1차 함수(직선)나 2차 함수는 슬라이더를 아무리 잘 조절해 점수를 90점 이상으로 올려도, **아래쪽 잔차 그래프에 U자나 V자 모양의 뚜렷한 패턴**이 계속 남게 됩니다. 오직 **지수 함수만이 잔차를 0 주변에 무작위로 흩어지게** 만들 수 있습니다.
-        * **과학적 이유:** 우리 몸에서 약물이 분해되는 속도는 '현재 몸에 남아있는 약물의 농도'에 비례($\\frac{dC}{dt} = -kC$)하기 때문에, 이를 풀면 필연적으로 지수함수 형태($C = C_0 e^{-kt}$)가 도출됩니다.
+    # 💡 [변경 포인트] 정답을 바로 주지 않고 토론과 탐구를 유도하는 질문형 구성
+    with st.expander("🤔 [심화 탐구] 어떤 함수 모델이 가장 적합할까요? 스스로 증명해 봅시다!"):
+        st.markdown("""
+        단순히 곡선 모양이 비슷하다고 해서 올바른 과학적 모델인 것은 아닙니다. 아래의 두 가지 관점에서 조원들과 함께 토론해 보세요.
+
+        **1. 통계적 관점: 잔차(Residual)의 숨겨진 의미**
+        * 1차 함수(직선)나 2차 함수(포물선) 모델의 파라미터를 아무리 잘 조절해도, 모델 일치도($R^2$) 점수를 어느 정도까지만 올릴 수 있었습니다.
+        * 점수가 높더라도 아래쪽 **잔차(Residual) 그래프**를 비교해 보세요. 1차와 2차 함수는 잔차가 U자나 V자 모양으로 일정한 '패턴'을 보입니다. 반면 지수 함수는 어떤가요? 
+        * 💡 **탐구 질문:** 완벽하게 데이터를 설명하는 모델이라면, 모델이 잡아내지 못한 오차(잔차)는 일정한 규칙을 가져야 할까요, 아니면 0을 중심으로 무작위(Random)로 흩어져야 할까요?
+
+        **2. 과학 및 수학적 관점: 약물이 사라지는 속도 (미적분)**
+        * 1차 함수(직선) 모델은 "시간이 지나도 약물이 줄어드는 *절대적인 양*이 매시간 똑같다"는 것을 의미합니다. 과연 우리 몸의 대사 작용이 그럴까요?
+        * 실제로 우리 몸에서 약물이 분해되는 속도는 **'현재 몸에 남아있는 약물의 양(농도)'에 비례**합니다. 몸에 약이 많으면 간이 열심히 일해서 빨리 분해하고, 약이 조금 남으면 천천히 분해하죠.
+        * 💡 **탐구 질문:** '약물 농도의 변화율(속도)이 현재 농도 $C$에 비례한다'는 문장을 수학적인 기호로 표현하면 $\\frac{dC}{dt} = -kC$ 가 됩니다. 고등학교 수학 지식을 활용했을 때, 이 미분방정식을 만족하는 함수는 1차, 2차, 지수 함수 중 무엇이 되어야만 할까요?
         """)
 
 # =============================================================================
