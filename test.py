@@ -15,7 +15,6 @@ st.markdown("""
     .sub-text { font-size: 1.1rem; color: #475569; margin-bottom: 2rem; }
     .step-title { font-size: 1.4rem; font-weight: 700; color: #0f766e; border-bottom: 2px solid #ccfbf1; padding-bottom: 0.5rem; margin-top: 2rem;}
     .info-box { background-color: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem;}
-    .quiz-box { background-color: #f0fdf4; padding: 1.5rem; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 1rem;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -102,6 +101,10 @@ with tab1:
         
         st.markdown("---")
         st.metric(label="현재 모델의 일치도 (R² 점수)", value=f"{int(r2 * 100)} 점")
+        if r2 > 0.9:
+            st.success("점수가 매우 높습니다! 하지만 우측 하단의 **잔차 패턴**도 꼭 확인하세요.")
+        else:
+            st.warning("점수가 낮습니다. 슬라이더를 움직여 곡선을 점에 맞춰보세요.")
 
     with col_graph:
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1, 
@@ -114,27 +117,29 @@ with tab1:
         fig.add_hline(y=0, line_dash='dash', line_color='gray', row=2, col=1)
         
         fig.update_layout(height=500, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="white", showlegend=False)
+        
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-0.5, 12.5], autorange=False, fixedrange=True, row=1, col=1)
         fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="농도 (mg/L)", range=[-5, 45], autorange=False, fixedrange=True, row=1, col=1)
+        
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="시간 (hours)", range=[-0.5, 12.5], autorange=False, fixedrange=True, row=2, col=1)
         fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="잔차", range=[-30, 30], autorange=False, fixedrange=True, row=2, col=1)
         
         st.plotly_chart(fig, use_container_width=True)
 
-    # 💡 [직관적 식 추측 가이드] 미분방정식 없이 지수함수 도출하기
-    with st.expander("🤔 [수학적 모델링] 미분방정식을 몰라도 이 식을 추측할 수 있을까요?"):
+    # 💡 [변경 포인트] 정답을 바로 주지 않고 토론과 탐구를 유도하는 질문형 구성
+    with st.expander("🤔 [심화 탐구] 어떤 함수 모델이 가장 적합할까요? 스스로 증명해 봅시다!"):
         st.markdown("""
-        어려운 대학 미적분을 쓰지 않더라도, 우리는 **고등학교 수학 I의 지수함수 성질**만으로 이 감소 곡선 식을 완벽하게 유추할 수 있습니다.
-        
-        **📉 규칙적인 비율로 감소하는 현상 (등비수열과 지수함수)**
-        * 만약 매 시간마다 체내에 남아있는 약물의 일정 비율(예: $30\%$)이 몸 밖으로 빠져나간다고 가정해 봅시다. 그럼 몸에 남는 양은 늘 전 시간의 $70\%(0.7)$가 됩니다.
-        * **0시간 뒤 (처음):** $C_0$
-        * **1시간 뒤:** $C_0 \times 0.7$
-        * **2시간 뒤:** $C_0 \times 0.7 \times 0.7 = C_0 \times 0.7^2$
-        * **$t$시간 뒤:** $C_0 \times 0.7^t$
-        
-        이처럼 **"시간이 흐름에 따라 남은 양의 '일정한 비율'이 지속적으로 감소하는 현상"**은 수학적으로 무조건 **지수함수($y = a \cdot b^x$, 단 $0 < b < 1$)** 모델이 될 수밖에 없습니다. 
-        자연과학에서는 이 밑($b$)을 계산이 편리한 자연상수 $e$를 활용해 $e^{-k}$ 형태로 표현할 뿐이랍니다.
+        단순히 곡선 모양이 비슷하다고 해서 올바른 과학적 모델인 것은 아닙니다. 아래의 두 가지 관점에서 조원들과 함께 토론해 보세요.
+
+        **1. 통계적 관점: 잔차(Residual)의 숨겨진 의미**
+        * 1차 함수(직선)나 2차 함수(포물선) 모델의 파라미터를 아무리 잘 조절해도, 모델 일치도($R^2$) 점수를 어느 정도까지만 올릴 수 있었습니다.
+        * 점수가 높더라도 아래쪽 **잔차(Residual) 그래프**를 비교해 보세요. 1차와 2차 함수는 잔차가 U자나 V자 모양으로 일정한 '패턴'을 보입니다. 반면 지수 함수는 어떤가요? 
+        * 💡 **탐구 질문:** 완벽하게 데이터를 설명하는 모델이라면, 모델이 잡아내지 못한 오차(잔차)는 일정한 규칙을 가져야 할까요, 아니면 0을 중심으로 무작위(Random)로 흩어져야 할까요?
+
+        **2. 과학 및 수학적 관점: 약물이 사라지는 속도 (미적분)**
+        * 1차 함수(직선) 모델은 "시간이 지나도 약물이 줄어드는 *절대적인 양*이 매시간 똑같다"는 것을 의미합니다. 과연 우리 몸의 대사 작용이 그럴까요?
+        * 실제로 우리 몸에서 약물이 분해되는 속도는 **'현재 몸에 남아있는 약물의 양(농도)'에 비례**합니다. 몸에 약이 많으면 간이 열심히 일해서 빨리 분해하고, 약이 조금 남으면 천천히 분해하죠.
+        * 💡 **탐구 질문:** '약물 농도의 변화율(속도)이 현재 농도 $C$에 비례한다'는 문장을 수학적인 기호로 표현하면 $\\frac{dC}{dt} = -kC$ 가 됩니다. 고등학교 수학 지식을 활용했을 때, 이 미분방정식을 만족하는 함수는 1차, 2차, 지수 함수 중 무엇이 되어야만 할까요?
         """)
 
 # =============================================================================
@@ -142,81 +147,52 @@ with tab1:
 # =============================================================================
 with tab2:
     st.markdown('<div class="step-title">3단계: 공식 도출 및 복용 간격 예측</div>', unsafe_allow_html=True)
+    st.write("탐구 결과 가장 적합했던 **지수함수 모델**을 바탕으로 맞춤형 복용 주기를 설계합니다. (가장 이상적인 파라미터 $C_0=25, k=0.35$ 를 사용합니다.)")
     
-    # 3단계용 이상적 파라미터 제시상태
-    opt_c0 = 25.0
-    opt_k = 0.35
-    true_half_life = np.log(2) / opt_k # 약 1.98시간
+    opt_c0, opt_k = 25.0, 0.35
+    half_life = np.log(2) / opt_k
     
-    st.markdown("""
-    2단계 탐구를 통해 우리는 가장 적합한 모델이 **지수함수 모델**임을 알아냈습니다. 
-    이제 분석을 통해 도출된 환자의 파라미터를 기반으로 맞춤형 복용 주기를 설계해 봅시다.
-    """)
-    
-    # 💡 [이유 명시] 왜 반감기를 계산해야 하는가?
-    st.markdown("### 💡 우리가 '반감기'를 직접 계산해야 하는 이유")
-    st.markdown("""
-    <div class="info-box">
-        소실 속도 상수 $k = 0.35$라는 숫자는 수학적으로는 정밀하지만, 환자나 의사에게 <strong>"그래서 이 약을 몇 시간마다 먹어야 하나요?"</strong>라는 질문에 직관적인 답을 주지 못합니다.<br>
-        반면 <strong>반감기($t_{1/2}$)</strong>는 약의 농도가 정확히 절반으로 줄어드는 <strong>'시간(hour) 단위'</strong>의 직관적인 지표를 제공합니다. 따라서 안전한 복용 주기를 설계하기 위해 $k$로부터 반감기를 환산하는 과정이 반드시 필요합니다.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 2구획 레이아웃 (좌: 수식 및 학생 계산 미션 / 우: 역함수 원리)
-    col_quiz, col_math = st.columns([1.2, 1])
-    
-    with col_quiz:
-        st.markdown('<div class="quiz-box">', unsafe_allow_html=True)
-        st.markdown("#### ✍️ [미션] 환자의 반감기($t_{1/2}$)를 직접 계산해 보세요!")
-        st.write(f"현재 환자의 초기 농도는 **$C_0 = {opt_c0}$ mg/L**, 소실 상수는 **$k = {opt_k}$** 입니다.")
-        st.latex(r"t_{1/2} = \frac{\ln 2}{k} \quad (\text{힌트: } \ln 2 \approx 0.693)")
-        
-        # 학생들이 직접 계산하여 입력하는 칸
-        student_input = st.number_input("계산한 반감기 값을 입력하세요 (소수점 첫째 자리까지 권장):", min_value=0.0, max_value=12.0, step=0.1)
-        
-        # 정답 체크 로직 (어느 정도 오차 허용)
-        is_correct = False
-        if student_input > 0:
-            if abs(student_input - true_half_life) < 0.15:
-                st.success(f"🎉 정답입니다! 이 환자의 약물 반감기는 약 **{student_input:.1f}시간** 입니다. 아래에서 시뮬레이션 기능이 활성화되었습니다.")
-                is_correct = True
-            else:
-                st.error("다시 한 번 계산해 보세요! 힌트: 0.693을 소실 상수 0.35로 나누어 보세요.")
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        st.markdown('<div class="info-box">', unsafe_allow_html=True)
+        st.markdown("#### 🔑 1. 이상적 파라미터")
+        st.write(f"- **초기 농도 ($C_0$):** {opt_c0:.1f} mg/L")
+        st.write(f"- **소실 상수 ($k$):** {opt_k:.2f}")
+        st.write(f"- **반감기 ($t_{{1/2}}$):** 약 {half_life:.1f} 시간")
         st.markdown('</div>', unsafe_allow_html=True)
         
-    with col_math:
+    with col_b:
         st.markdown('<div class="info-box">', unsafe_allow_html=True)
-        st.markdown("#### 🔄 역함수(로그)의 적용 원리")
-        st.write("특정 목표 농도($C_{min}$)에 도달하는 정확한 시간($t$)을 구하기 위해, 우리는 지수함수의 역함수 관계인 **자연로그** 공식을 사용합니다.")
-        st.latex(r"C = C_0 \cdot e^{-kt}")
-        st.latex(r"\Rightarrow \ln\left(\frac{C}{C_0}\right) = -kt")
-        st.latex(r"\Rightarrow t = \frac{-\ln(C/C_0)}{k}")
+        st.markdown("#### 🔄 2. 역함수 적용")
+        st.write("목표 농도($C_{min}$)에 도달하는 시간 $t$를 구하기 위해 지수함수의 역함수(자연로그)를 적용합니다.")
+        st.latex(r"t = \frac{-\ln(C/C_0)}{k}")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with col_c:
+        st.markdown('<div class="info-box">', unsafe_allow_html=True)
+        st.markdown("#### 🎯 3. 최소 유효 농도 설정")
+        target_c = st.slider("최소 유효 농도 ($C_{min}$)", 1.0, 10.0, 5.0, 0.5)
+        st.write("약효가 떨어지기 전, 약을 다시 먹어야 하는 기준선입니다.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # 💡 정답을 맞추어야만 하단 복용 간격 예측 슬라이더와 그래프가 열리도록 락(Lock) 제어
-    if is_correct:
-        st.markdown("---")
-        st.markdown("### 🎯 최소 유효 농도 설정 및 복용 주기 예측")
-        st.write("약효가 완전히 사라지기 전(통증이 다시 시작되기 전), 약을 재복용해야 하는 기준선인 **최소 유효 농도**를 설정해 보세요.")
-        
-        target_c = st.slider("최소 유효 농도 ($C_{min}$ 단위: mg/L)", 1.0, 10.0, 5.0, 0.5)
-        
-        # 역함수 공식을 이용한 시간 예측 계산
+    if opt_c0 > target_c:
         pred_time = -np.log(target_c / opt_c0) / opt_k
+    else:
+        pred_time = 0.0
         
-        st.markdown(f"### ⏱️ 예측 결과: 다음 약 복용 시점은 복용 후 **약 {pred_time:.1f}시간** 뒤입니다.")
-        
-        # Plotly 시뮬레이션 시각화
-        t_pred = np.linspace(0, 24, 200)
-        c_pred = opt_c0 * np.exp(-opt_k * t_pred)
-        
-        fig_pred = go.Figure()
-        fig_pred.add_trace(go.Scatter(x=t_pred, y=c_pred, mode='lines', name='농도 예측 모델', line=dict(color='#0f766e', width=3)))
-        fig_pred.add_hline(y=target_c, line_dash='dash', line_color='#d97706', annotation_text=f"최소 유효 농도 ({target_c})")
-        fig_pred.add_trace(go.Scatter(x=[pred_time], y=[target_c], mode='markers+text', name='복용 시점',
-                                      marker=dict(color='red', size=12), text=[f"약효 소실 지점 (t={pred_time:.1f}h)"], textposition="top right", textfont=dict(color="red", size=13)))
-        
-        fig_pred.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="white", showlegend=False)
-        fig_pred.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="시간 (hours)", range=[0, 15], fixedrange=True)
-        fig_pred.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="혈중 농도 (mg/L)", range=[0, 30], fixedrange=True)
-        st.plotly_chart(fig_pred, use_container_width=True)
+    st.markdown("---")
+    st.markdown(f"### 💡 예측 결과: 다음 약 복용 시점은 약 **{pred_time:.1f}시간** 뒤입니다.")
+    
+    t_pred = np.linspace(0, 24, 200)
+    c_pred = opt_c0 * np.exp(-opt_k * t_pred)
+    
+    fig_pred = go.Figure()
+    fig_pred.add_trace(go.Scatter(x=t_pred, y=c_pred, mode='lines', name='농도 예측 모델', line=dict(color='#0f766e', width=3)))
+    fig_pred.add_hline(y=target_c, line_dash='dash', line_color='#d97706', annotation_text=f"최소 유효 농도 ({target_c})")
+    fig_pred.add_trace(go.Scatter(x=[pred_time], y=[target_c], mode='markers+text', name='복용 시점',
+                                  marker=dict(color='red', size=12), text=[f"약효 소실 지점 (t={pred_time:.1f}h)"], textposition="top right", textfont=dict(color="red", size=13)))
+    
+    fig_pred.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="white", showlegend=False)
+    fig_pred.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="시간 (hours)", range=[0, 15], fixedrange=True)
+    fig_pred.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="혈중 농도 (mg/L)", range=[0, 30], fixedrange=True)
+    st.plotly_chart(fig_pred, use_container_width=True)
