@@ -49,13 +49,18 @@ with tab1:
     st.markdown('<div class="step-title">1단계: 측정 데이터 관찰</div>', unsafe_allow_html=True)
     st.write("혈중 약물 농도 측정 데이터가 어떻게 분포되어 있는지 확인합니다.")
     
-    # Plotly 기본 산점도 (축 절대 고정)
+    # 💡 1단계 그래프 (축 1:1 비율 적용)
     fig_data = go.Figure()
     fig_data.add_trace(go.Scatter(x=time_data, y=conc_data, mode='markers', marker=dict(size=8, color='#e11d48'), name='측정값'))
-    fig_data.update_layout(height=300, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="시간 (hours)", yaxis_title="농도 (mg/L)", plot_bgcolor="white")
-    # 확대/축소 및 자동 크기 조절 완전 차단
+    
+    # 1:1 비율일 때 세로가 길어지므로 height를 500으로 조정
+    fig_data.update_layout(height=500, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="시간 (hours)", yaxis_title="농도 (mg/L)", plot_bgcolor="white")
+    
     fig_data.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-0.5, 12.5], autorange=False, fixedrange=True)
-    fig_data.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-5, 45], autorange=False, fixedrange=True)
+    
+    # 💡 핵심: scaleanchor="x", scaleratio=1을 부여하여 x축과 y축 눈금 길이를 1:1로 고정
+    fig_data.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-5, 45], autorange=False, fixedrange=True, scaleanchor="x", scaleratio=1)
+    
     st.plotly_chart(fig_data, use_container_width=True)
 
     st.markdown('<div class="step-title">2단계: 나만의 수학적 모델 만들기 (동적 파라미터 탐구)</div>', unsafe_allow_html=True)
@@ -120,8 +125,6 @@ with tab1:
         
         fig.update_layout(height=500, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="white", showlegend=False)
         
-        # 💡 [핵심 해결] 축 고정 장치 적용 (autorange=False, fixedrange=True)
-        # 어떤 슬라이더 값을 넣어도, 마우스 휠을 굴려도 축이 절대 변하지 않습니다.
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-0.5, 12.5], autorange=False, fixedrange=True, row=1, col=1)
         fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="농도 (mg/L)", range=[-5, 45], autorange=False, fixedrange=True, row=1, col=1)
         
@@ -189,7 +192,6 @@ with tab2:
                                   marker=dict(color='red', size=12), text=[f"약효 소실 지점 (t={pred_time:.1f}h)"], textposition="top right", textfont=dict(color="red", size=13)))
     
     fig_pred.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="white", showlegend=False)
-    # 3단계 예측 그래프도 마우스 휠 방지 적용
     fig_pred.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="시간 (hours)", range=[0, 15], fixedrange=True)
     fig_pred.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="혈중 농도 (mg/L)", range=[0, 30], fixedrange=True)
     st.plotly_chart(fig_pred, use_container_width=True)
