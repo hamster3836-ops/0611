@@ -49,17 +49,16 @@ with tab1:
     st.markdown('<div class="step-title">1단계: 측정 데이터 관찰</div>', unsafe_allow_html=True)
     st.write("혈중 약물 농도 측정 데이터가 어떻게 분포되어 있는지 확인합니다.")
     
-    # 💡 1단계 그래프 (축 1:1 비율 적용)
+    # 💡 1단계 그래프 (1:1 강제 비율 해제, 직관적인 가로형 황금비율 적용)
     fig_data = go.Figure()
     fig_data.add_trace(go.Scatter(x=time_data, y=conc_data, mode='markers', marker=dict(size=8, color='#e11d48'), name='측정값'))
     
-    # 1:1 비율일 때 세로가 길어지므로 height를 500으로 조정
-    fig_data.update_layout(height=500, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="시간 (hours)", yaxis_title="농도 (mg/L)", plot_bgcolor="white")
+    # 높이를 400으로 조절하여 데이터의 감소 추세가 잘 보이도록 수정
+    fig_data.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="시간 (hours)", yaxis_title="농도 (mg/L)", plot_bgcolor="white")
     
+    # 축 이동/확대 방지(fixedrange=True)는 유지하되, scaleanchor(1:1 비율)는 제거
     fig_data.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-0.5, 12.5], autorange=False, fixedrange=True)
-    
-    # 💡 핵심: scaleanchor="x", scaleratio=1을 부여하여 x축과 y축 눈금 길이를 1:1로 고정
-    fig_data.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-5, 45], autorange=False, fixedrange=True, scaleanchor="x", scaleratio=1)
+    fig_data.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-5, 45], autorange=False, fixedrange=True)
     
     st.plotly_chart(fig_data, use_container_width=True)
 
