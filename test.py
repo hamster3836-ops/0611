@@ -45,12 +45,12 @@ with tab1:
     st.markdown('<div class="step-title">1단계: 측정 데이터 관찰</div>', unsafe_allow_html=True)
     st.write("혈중 약물 농도 측정 데이터가 어떻게 분포되어 있는지 확인합니다.")
     
-    # Plotly 기본 산점도
+    # Plotly 기본 산점도 (축 고정 추가)
     fig_data = go.Figure()
     fig_data.add_trace(go.Scatter(x=time_data, y=conc_data, mode='markers', marker=dict(size=8, color='#e11d48'), name='측정값'))
     fig_data.update_layout(height=300, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="시간 (hours)", yaxis_title="농도 (mg/L)", plot_bgcolor="white")
-    fig_data.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
-    fig_data.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
+    fig_data.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-0.5, 12.5])
+    fig_data.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-5, 45])
     st.plotly_chart(fig_data, use_container_width=True)
 
     st.markdown('<div class="step-title">2단계: 나만의 수학적 모델 만들기 (동적 파라미터 탐구)</div>', unsafe_allow_html=True)
@@ -119,12 +119,16 @@ with tab1:
         fig.add_trace(go.Scatter(x=time_data, y=residuals, mode='markers', name='잔차(오차)', marker=dict(color=color_theme, size=6)), row=2, col=1)
         fig.add_hline(y=0, line_dash='dash', line_color='gray', row=2, col=1)
         
-        # 레이아웃 디자인 설정
+        # 💡 레이아웃 디자인 및 '축 범위(range) 고정' 설정
         fig.update_layout(height=500, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="white", showlegend=False)
-        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', row=1, col=1)
-        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="농도 (mg/L)", row=1, col=1)
-        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="시간 (hours)", row=2, col=1)
-        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="잔차", row=2, col=1)
+        
+        # 1행(피팅 그래프) 축 고정: y축은 -5 ~ 45, x축은 -0.5 ~ 12.5
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', range=[-0.5, 12.5], row=1, col=1)
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="농도 (mg/L)", range=[-5, 45], row=1, col=1)
+        
+        # 2행(잔차 그래프) 축 고정: y축은 -30 ~ 30, x축은 1행과 동일
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="시간 (hours)", range=[-0.5, 12.5], row=2, col=1)
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray', title_text="잔차", range=[-30, 30], row=2, col=1)
         
         st.plotly_chart(fig, use_container_width=True)
 
